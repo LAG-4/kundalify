@@ -16,10 +16,7 @@ class CosmicScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: CosmicBackground(
-        decorations: decorations,
-        child: body,
-      ),
+      body: CosmicBackground(decorations: decorations, child: body),
     );
   }
 }

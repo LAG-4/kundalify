@@ -4,13 +4,14 @@ Guidance for agentic coding tools working in this repository.
 Follow existing patterns unless the task explicitly changes conventions.
 
 ## Repo snapshot
-- Flutter app at repo root (`pubspec.yaml`, `lib/`, `test/`)
-- Dart SDK: `^3.10.1` (see `pubspec.yaml`)
-- State management: Riverpod (`flutter_riverpod`)
-- Theme + UI primitives: `lib/src/core/theme/`, `lib/src/core/widgets/`
-- Entry point: `lib/main.dart` -> `ProviderScope` -> `KundalifyApp`
-- Test example: `test/widget_test.dart` (welcome -> loading flow)
-- Optional/legacy: `website/` (Vite + React + TypeScript) exists in git history; may be absent locally
+- Flutter app at repo root (`pubspec.yaml`, `lib/`, `test/`).
+- Dart SDK constraint: `^3.10.1` (see `pubspec.yaml`).
+- State management: Riverpod (`flutter_riverpod`).
+- Theme + UI primitives: `lib/src/core/theme/`, `lib/src/core/widgets/`.
+- Entry point: `lib/main.dart` -> `ProviderScope` -> `KundalifyApp`.
+- Main flow: `lib/src/features/kundali/presentation/kundali_flow.dart`.
+- Kundali domain/data: `lib/src/features/kundali/domain/`, `lib/src/features/kundali/data/`.
+- Optional/legacy: `website/` (Vite + React + TypeScript) exists in git history; may be absent locally.
 
 ## Commands (Flutter)
 
@@ -24,9 +25,19 @@ flutter devices
 flutter run
 flutter run -d <deviceId>
 
-# Pass runtime config (recommended for API keys)
-flutter run --dart-define=ASTRO_API_KEY=...
-flutter run --dart-define=ASTRO_API_BASE_URL=...
+### Run with runtime config (recommended for API keys)
+# Provide credentials via dart-define. Never commit keys.
+flutter run --dart-define=PROKERALA_CLIENT_ID=... --dart-define=PROKERALA_CLIENT_SECRET=...
+
+# Optional overrides
+flutter run \
+  --dart-define=PROKERALA_CLIENT_ID=... \
+  --dart-define=PROKERALA_CLIENT_SECRET=... \
+  --dart-define=PROKERALA_BASE_URL=https://api.prokerala.com/v2 \
+  --dart-define=PROKERALA_TOKEN_URL=https://api.prokerala.com/token \
+  --dart-define=PROKERALA_AYANAMSA=1 \
+  --dart-define=PROKERALA_LANG=en \
+  --dart-define=PROKERALA_CHART_TYPE=lagna
 
 ### Format
 # Preferred formatter
@@ -46,7 +57,7 @@ flutter test
 flutter test test/widget_test.dart
 
 # Single test by name (substring match)
-flutter test test/widget_test.dart --plain-name "welcome -> loading flow"
+flutter test test/widget_test.dart --plain-name "welcome -> input flow"
 
 # Expanded reporter output
 flutter test -r expanded
@@ -55,10 +66,8 @@ flutter test -r expanded
 flutter test --coverage
 
 ### Build
-# Android APK (release by default)
-flutter build apk
+# Android APK
 flutter build apk --debug
-flutter build apk --profile
 flutter build apk --release
 
 # Android App Bundle
@@ -75,7 +84,6 @@ flutter pub get
 
 # Install deps
 npm --prefix website install
-# or: cd website && npm install
 
 # Run dev server (per Vite config it uses port 3000)
 npm --prefix website run dev
@@ -84,15 +92,13 @@ npm --prefix website run dev
 npm --prefix website run build
 npm --prefix website run preview
 
-# Tests/lint: none configured in `website/package.json` (add ESLint/Prettier if needed)
-
 ## Code organization (Flutter)
 - Keep app wiring minimal in `lib/main.dart` and `lib/src/app/kundalify_app.dart`.
-- Use feature-first layout under `lib/src/features/<feature>/`:
+- Feature-first layout under `lib/src/features/<feature>/`:
   - `presentation/` for widgets/screens.
   - `application/` for Riverpod controllers/notifiers.
-  - Add `domain/` for pure models/use-cases (no Flutter imports).
-  - Add `data/` for API clients, DTOs, repositories, mappers.
+  - `domain/` for pure models (no Flutter imports).
+  - `data/` for API clients, DTOs, repositories, mappers.
 - Shared UI building blocks go in `lib/src/core/widgets/`.
 - Theme/tokens stay in `lib/src/core/theme/` (`AppColors`, `AppTheme`).
 
@@ -102,43 +108,43 @@ npm --prefix website run preview
   - third-party `package:` imports
   - local imports
 - One blank line between groups.
-- Current convention in `lib/`: relative imports between `lib/src/...` files.
-- Tests may use `package:kundalify/...` imports for clarity.
+- Convention in `lib/`: relative imports between `lib/src/...` files.
+- Tests may use `package:kundalify/...` imports.
 - Use namespace aliases for common libs (e.g. `import 'dart:math' as math;`).
 
 ## Formatting (Flutter)
 - Run `dart format` on any changed Dart code.
 - Prefer `const` widgets/constructors and `final` locals.
 - Use trailing commas in multi-line widget trees and argument lists.
-- Prefer typed collection literals where it helps readability (`const <Widget>[]`, `<Color>[]`).
-- Keep `build()` readable; extract private widgets (`_Foo`) or helpers when a widget grows.
+- Prefer typed collection literals where it helps readability (`const <Widget>[]`).
+- Keep `build()` readable; extract private widgets (`_Foo`) or helpers when needed.
 
-## Naming conventions (Flutter)
-- Files: `snake_case.dart`
-- Types/widgets: `PascalCase`
-- Members/locals: `lowerCamelCase`
-- Private symbols: leading `_`
-- Providers: `...Provider` suffix (example: `onboardingControllerProvider`)
-- Notifiers/controllers: `...Controller` suffix when they own state transitions
-- Screens: `...Screen` for full pages; `...View` for reusable UI blocks
+## Naming conventions
+- Files: `snake_case.dart`.
+- Types/widgets: `PascalCase`.
+- Members/locals: `lowerCamelCase`.
+- Private symbols: leading `_`.
+- Providers: `...Provider` suffix.
+- Controllers/notifiers: `...Controller` suffix when they own transitions.
+- Screens: `...Screen` for pages; `...View` for reusable UI blocks.
 
 ## Riverpod conventions
 - UI reads state with `ref.watch(...)`.
-- UI triggers transitions in callbacks with `ref.read(provider.notifier).method()`.
-- Keep side-effects out of `build()`; use controllers/notifiers or widget lifecycle.
-- For API calls, prefer `AsyncNotifier` / `FutureProvider` and model loading/error states explicitly.
+- UI triggers transitions with `ref.read(provider.notifier).method()`.
+- Keep side-effects out of `build()`.
+- For API calls, prefer explicit loading/error/success states.
 - Do not store `BuildContext` in providers/controllers.
 
 ## Types and modeling
 - Avoid `dynamic` and `Map<String, dynamic>` beyond the API boundary.
-- Create explicit DTOs for API responses; map to app/domain models.
+- Create explicit DTOs when integrating new endpoints; map to domain models.
 - Validate required fields when parsing; surface parse errors as typed failures.
-- Keep models immutable; prefer `const` where practical.
+- Keep models immutable.
 
 ## Error handling and UX
 - Treat network/API as fallible; never assume success.
-- Catch exceptions in the data layer, map to typed failures, and return structured results.
-- UI must handle: loading, error, empty, success (no silent failures).
+- Catch exceptions in the data layer and map to structured failures.
+- UI must handle: loading, error, empty, success.
 - Prefer actionable user-facing errors; avoid raw stack traces in UI.
 - Use `debugPrint` for diagnostics; avoid `print`.
 
@@ -150,7 +156,7 @@ npm --prefix website run preview
   - implement `shouldRepaint` correctly
   - keep text readable (minimum font sizes, handle overflow)
 
-## Kundali assignment constraints (product requirements)
+## Product constraints (assignment)
 - Use a real public Astrology API (no hardcoded responses).
 - Prefer North Indian style chart.
 - Chart must display:
@@ -162,7 +168,7 @@ npm --prefix website run preview
 ## Secrets and local config
 - Never commit API keys or credentials.
 - Prefer `--dart-define` for secrets; read via `String.fromEnvironment(...)`.
-- `android/local.properties` is machine-local and ignored (SDK paths).
+- `android/local.properties` is machine-local and ignored.
 - Generated folders like `.dart_tool/` and `build/` should remain untracked.
 
 ## Cursor / Copilot instructions

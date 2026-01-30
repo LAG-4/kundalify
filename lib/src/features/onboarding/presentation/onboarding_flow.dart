@@ -14,8 +14,8 @@ class OnboardingFlow extends ConsumerWidget {
 
     return switch (step) {
       OnboardingStep.welcome => WelcomeScreen(
-          onStart: () => ref.read(onboardingControllerProvider.notifier).start(),
-        ),
+        onStart: () => ref.read(onboardingControllerProvider.notifier).start(),
+      ),
       OnboardingStep.loading => const LoadingScreen(),
     };
   }

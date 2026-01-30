@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
-import '../features/onboarding/presentation/onboarding_flow.dart';
+import '../features/kundali/presentation/kundali_flow.dart';
 
 class KundalifyApp extends StatelessWidget {
   const KundalifyApp({super.key});
@@ -12,7 +12,7 @@ class KundalifyApp extends StatelessWidget {
       title: 'Cosmic Kundali',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark(),
-      home: const OnboardingFlow(),
+      home: const KundaliFlow(),
     );
   }
 }

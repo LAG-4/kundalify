@@ -22,7 +22,11 @@ class CosmicBackground extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: <Color>[AppColors.cosmic900, AppColors.cosmic800, Colors.black],
+            colors: <Color>[
+              AppColors.cosmic900,
+              AppColors.cosmic800,
+              Colors.black,
+            ],
           ),
         ),
         child: Stack(
@@ -30,10 +34,7 @@ class CosmicBackground extends StatelessWidget {
           children: <Widget>[
             if (decorations.isNotEmpty)
               IgnorePointer(
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: decorations,
-                ),
+                child: Stack(fit: StackFit.expand, children: decorations),
               ),
             child,
           ],

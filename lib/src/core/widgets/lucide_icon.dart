@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-enum LucideAsset {
-  sparkles,
-  star,
-  arrowRight,
-}
+enum LucideAsset { sparkles, star, arrowRight }
 
 class LucideIcon extends StatelessWidget {
   const LucideIcon({

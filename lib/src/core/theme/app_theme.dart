@@ -17,10 +17,9 @@ abstract final class AppTheme {
     );
 
     return base.copyWith(
-      textTheme: GoogleFonts.interTextTheme(base.textTheme).apply(
-        bodyColor: Colors.white,
-        displayColor: Colors.white,
-      ),
+      textTheme: GoogleFonts.interTextTheme(
+        base.textTheme,
+      ).apply(bodyColor: Colors.white, displayColor: Colors.white),
       textSelectionTheme: TextSelectionThemeData(
         cursorColor: AppColors.mysticPurple,
         selectionColor: AppColors.mysticPurple.withValues(alpha: 0.35),

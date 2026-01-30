@@ -11,15 +11,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kundalify/src/app/kundalify_app.dart';
 
 void main() {
-  testWidgets('welcome -> loading flow', (WidgetTester tester) async {
+  testWidgets('welcome -> input flow', (WidgetTester tester) async {
     await tester.pumpWidget(const ProviderScope(child: KundalifyApp()));
 
     expect(find.text('Cosmic Kundali'), findsOneWidget);
-    expect(find.text('Create Your Kundali'), findsOneWidget);
+    expect(find.text('Get Started'), findsOneWidget);
 
-    await tester.tap(find.text('Create Your Kundali'));
+    await tester.tap(find.text('Get Started'));
     await tester.pump();
 
-    expect(find.text('Generating Chart'), findsOneWidget);
+    expect(find.text('Birth Details'), findsOneWidget);
+    expect(find.text('Generate'), findsOneWidget);
   });
 }

@@ -62,10 +62,13 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     final headingSize = size.width < 360
         ? 46.0
         : size.width < 480
-            ? 54.0
-            : 64.0;
+        ? 54.0
+        : 64.0;
 
-    final fade = CurvedAnimation(parent: _fadeController, curve: Curves.easeOut);
+    final fade = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    );
     final slide = Tween<Offset>(
       begin: const Offset(0, 0.04),
       end: Offset.zero,
@@ -153,8 +156,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       AnimatedBuilder(
                         animation: _floatController,
                         builder: (context, child) {
-                          final dy =
-                              Tween<double>(begin: 0, end: -10).evaluate(
+                          final dy = Tween<double>(begin: 0, end: -10).evaluate(
                             CurvedAnimation(
                               parent: _floatController,
                               curve: Curves.easeInOut,
@@ -249,7 +251,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           color: Colors.white,
                         ),
                         child: CosmicPrimaryButton(
-                          label: 'Create Your Kundali',
+                          label: 'Get Started',
                           onPressed: widget.onStart,
                           trailing: const LucideIcon(
                             icon: LucideAsset.arrowRight,

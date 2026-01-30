@@ -28,9 +28,13 @@ class _CosmicPrimaryButtonState extends State<CosmicPrimaryButton> {
 
   @override
   Widget build(BuildContext context) {
-    final background = AppColors.mysticPurple.withValues(alpha: _pressed ? 0.40 : 0.20);
+    final background = AppColors.mysticPurple.withValues(
+      alpha: _pressed ? 0.40 : 0.20,
+    );
     final border = AppColors.mysticPurple.withValues(alpha: 0.50);
-    final shadowColor = AppColors.mysticPurple.withValues(alpha: _pressed ? 0.40 : 0.0);
+    final shadowColor = AppColors.mysticPurple.withValues(
+      alpha: _pressed ? 0.40 : 0.0,
+    );
 
     return AnimatedScale(
       duration: const Duration(milliseconds: 150),

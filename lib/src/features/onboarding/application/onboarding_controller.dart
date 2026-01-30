@@ -4,8 +4,8 @@ enum OnboardingStep { welcome, loading }
 
 final onboardingControllerProvider =
     NotifierProvider<OnboardingController, OnboardingStep>(
-  OnboardingController.new,
-);
+      OnboardingController.new,
+    );
 
 class OnboardingController extends Notifier<OnboardingStep> {
   @override

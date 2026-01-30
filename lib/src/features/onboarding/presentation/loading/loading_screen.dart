@@ -56,7 +56,9 @@ class _LoadingScreenState extends State<LoadingScreen>
 
     _timer = Timer.periodic(const Duration(milliseconds: 1500), (_) {
       if (!mounted) return;
-      setState(() => _messageIndex = (_messageIndex + 1) % _loadingMessages.length);
+      setState(
+        () => _messageIndex = (_messageIndex + 1) % _loadingMessages.length,
+      );
     });
   }
 
@@ -192,7 +194,10 @@ class _LoadingScreenState extends State<LoadingScreen>
                       ).animate(animation);
                       return FadeTransition(
                         opacity: animation,
-                        child: SlideTransition(position: offsetAnimation, child: child),
+                        child: SlideTransition(
+                          position: offsetAnimation,
+                          child: child,
+                        ),
                       );
                     },
                     child: Text(
@@ -267,7 +272,13 @@ class _ArcPainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.round
       ..color = color;
 
-    canvas.drawArc(rect.deflate(strokeWidth / 2), startAngle, sweepAngle, false, paint);
+    canvas.drawArc(
+      rect.deflate(strokeWidth / 2),
+      startAngle,
+      sweepAngle,
+      false,
+      paint,
+    );
   }
 
   @override
