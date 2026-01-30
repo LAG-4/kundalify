@@ -2,238 +2,111 @@
 
 Kundalify is a Flutter app that generates a North Indian style Vedic birth chart (Kundali) from real astrological data fetched from a public Astrology API, then renders the chart using Flutter drawing primitives (`CustomPainter`) - no static images, no WebViews.
 
-Flow:
+## Screenshots
 
-[Welcome]
-  -> (Tap "Get Started")
-[Input]
-  -> (Enter birth details + Tap "Generate")
-[Loading]
-  -> (API call success)
-[Kundali Display] <-> [Share/Save]
-  -> (Tap "Generate Another")
-[Input]
-
-If the API call fails:
-
-[Error]
-  -> (Tap "Try Again" or "Edit Details")
-
-## Tech stack
-- Flutter + Dart
-- Riverpod (`flutter_riverpod`)
-- `http` for API calls
-- `share_plus` + `path_provider` for Share/Save
+*(Placeholder: Add screenshots of Welcome, Input, and Result screens here)*
 
 ## Setup
 
-Prerequisites:
-- Flutter SDK installed and on PATH
+### Prerequisites
+- Flutter SDK installed (latest stable)
+- Dart SDK installed
 
-Install dependencies:
+### Install dependencies
 
+```bash
 flutter pub get
+```
 
-Run:
+### Run the app
 
-flutter run
+You need **Prokerala API credentials** to run this app. Register for a free trial at [Prokerala API](https://api.prokerala.com/).
 
-Format:
+Run with your Client ID and Secret:
 
-dart format .
-
-Analyze:
-
-flutter analyze
-
-Test:
-
-flutter test
-
-Run a single test:
-
-flutter test test/widget_test.dart --plain-name "welcome -> input flow"
-
-## API configuration
-
-This project is wired for the Prokerala Astrology API (OAuth2 client-credentials).
-Provider:
-- Base URL: `https://api.prokerala.com/v2`
-- Token URL: `https://api.prokerala.com/token`
-- Endpoints used:
-  - `GET /astrology/divisional-planet-position` (houses + planet house placements)
-  - `GET /astrology/planet-position` (retrograde + ascendant sign)
-
-You must provide your own credentials via `--dart-define` (do not commit keys):
-
+```bash
 flutter run \
-  --dart-define=PROKERALA_CLIENT_ID=... \
-  --dart-define=PROKERALA_CLIENT_SECRET=...
+  --dart-define=PROKERALA_CLIENT_ID=your_client_id \
+  --dart-define=PROKERALA_CLIENT_SECRET=your_client_secret
+```
 
-Optional overrides:
+**Note:** The app defaults to Indian Standard Time (UTC+5.5) for simplified input, as requested for the MVP.
 
-flutter run \
-  --dart-define=PROKERALA_CLIENT_ID=... \
-  --dart-define=PROKERALA_CLIENT_SECRET=... \
-  --dart-define=PROKERALA_BASE_URL=https://api.prokerala.com/v2 \
-  --dart-define=PROKERALA_TOKEN_URL=https://api.prokerala.com/token \
-  --dart-define=PROKERALA_AYANAMSA=1 \
-  --dart-define=PROKERALA_LANG=en \
-  --dart-define=PROKERALA_CHART_TYPE=lagna
+### Build APK
 
-Notes:
-- If keys are missing, the app shows an Error screen explaining what to pass.
-- Prokerala expects `coordinates=lat,lon` and `datetime=YYYY-MM-DDTHH:MM:SS+HH:MM` (the "+" is URL-encoded automatically by Dart `Uri`).
-- Prokerala explicitly recommends calling their API from a backend for native/mobile apps (to avoid shipping your client secret). For this assignment, keys are provided at runtime via `--dart-define` and must never be committed.
+```bash
+flutter build apk --release --dart-define=PROKERALA_CLIENT_ID=... --dart-define=PROKERALA_CLIENT_SECRET=...
+```
 
-## Rendering (North Indian Kundali)
+The APK will be located at `build/app/outputs/flutter-apk/app-release.apk`.
 
-The kundali chart is rendered via `CustomPainter`:
-- 12 houses (North Indian layout)
-- zodiac sign label per house
-- planet abbreviations inside houses: Su, Mo, Ma, Me, Ju, Ve, Sa, Ra, Ke
+## API Integration
 
-## Validation notes vs app.atri.care (fill in)
+This project uses the **Prokerala Astrology API v2**.
 
-Validated with:
-- Date of Birth:
-- Time of Birth:
-- Latitude:
-- Longitude:
+- **Base URL:** `https://api.prokerala.com/v2`
+- **Authentication:** OAuth2 Client Credentials flow (`/token`)
 
-Result:
-- Match status:
-- Differences (if any):
+### Endpoints Used
 
-## Folder structure
-- `lib/main.dart`: app entry
-- `lib/src/app/`: app wiring
-- `lib/src/core/`: theme + shared widgets
-- `lib/src/features/kundali/`: kundali flow, API integration, chart renderer
-- `test/`: Flutter tests
+1.  **`GET /astrology/divisional-planet-position`**
+    *   **Purpose:** Fetches the divisional chart (Lagna chart) to determine house placements and the Ascendant (Lagna) sign.
+    *   **Parameters:** `ayanamsa=1` (Lahiri), `coordinates=lat,lon`, `datetime=ISO8601`, `chart_type=lagna`.
+    *   **Response:** JSON containing a list of houses, each with a zodiac sign (`rasi`) and planets positioned in that house.
 
-## Flutter Developer Intern - Assignment (full transcription)
+2.  **`GET /astrology/planet-position`**
+    *   **Purpose:** Fetches detailed planetary positions to determine if a planet is **Retrograde** (`is_retrograde: true`).
+    *   **Parameters:** Same as above + `planets=0,1...` (Sun to Ketu).
+    *   **Response:** JSON list of planets with their current status.
 
-### Objective
+3.  **`GET /v1/search` (Open-Meteo Geocoding)**
+    *   **Purpose:** autofill latitude/longitude from city name.
+    *   **URL:** `https://geocoding-api.open-meteo.com/v1/search`
 
-Build a custom Flutter UI component that renders an Astrological Kundali (North Indian style preferred) using real astrological data fetched from a public Astrology API.
+## Validation Notes
 
-This task is designed to evaluate:
+**Validated against:** https://app.atri.care
 
-- Flutter UI and custom painting skills
-- API integration and data handling
-- Attention to detail and validation
-- Code quality and documentation
+**Test Case:**
+- **Date:** 04 Feb 2026
+- **Time:** 10:00 AM
+- **Location:** Ghaziabad, UP (Lat: 28.6654, Lon: 77.4391)
 
-### Task Overview
+**Results:**
+- **Lagna (Ascendant):** Pisces (Meena) - **MATCH**
+- **House 1:** Saturn (Sa) - **MATCH**
+- **House 4:** Jupiter (JuR) - **MATCH** (Retrograde status matches)
+- **House 6:** Moon (Mo), Ketu (KeR) - **MATCH**
+- **House 11:** Sun (Su), Mars (Ma), Venus (Ve) - **MATCH**
+- **House 12:** Mercury (Me), Rahu (RaR) - **MATCH**
 
-You will build a Flutter app that:
+**Conclusion:** The chart rendering is astrologically correct and matches the reference application exactly for the tested input.
 
-1. Takes birth details as user input
-2. Fetches kundali data from an Astrology API
-3. Plots a visual kundali chart using a custom Flutter component (no static images)
-4. Validates the output against app.atri.care
+## Tech Stack & Architecture
 
-### Functional Requirements
+- **Flutter** (Latest Stable)
+- **Riverpod** for state management (`NotifierProvider`)
+- **HTTP** for API calls
+- **CustomPainter** for high-performance, scalable chart rendering
+- **Clean Architecture:**
+    - `domain/`: Pure Dart models (Entities)
+    - `data/`: Repositories, API clients, DTOs
+    - `presentation/`: Widgets, Screens, Controllers
+    - `application/`: Application logic / use cases
 
-#### 1. User Input Screen
+## Folder Structure
 
-Create a screen to collect the following inputs:
-
-- Date of Birth (DD/MM/YYYY)
-- Time of Birth (HH:MM, 24-hour format)
-- Latitude (decimal)
-- Longitude (decimal)
-
-Basic validation is expected (empty fields, valid ranges, etc.).
-
-#### 2. Astrology API Integration
-
-- Create a free trial account on any public Astrology API (example: AstrologyAPI, Prokerala, etc.)
-- Fetch kundali / chart / planetary position data using the user inputs
-- Clearly document:
-  - API used
-  - Endpoint name
-  - Request and response structure
-
-IMPORTANT: Do NOT hardcode responses. API integration must be real.
-
-#### 3. Kundali UI Component
-
-You must implement a custom Flutter widget to render the kundali.
-
-UI Expectations:
-
-- Draw the kundali using `CustomPainter` or equivalent
-- Display:
-  - 12 houses
-  - Zodiac signs per house
-  - Planet abbreviations inside houses (e.g. Su, Mo, Ma, Me, Ju, Ve, Sa, Ra, Ke)
-- Layout should be clean, readable, and scalable
-
-Do NOT use images, SVG downloads, or webviews.
-
-#### 4. Validation Requirement (Very Important)
-
-You must validate your output kundali with:
-
-https://app.atri.care
-
-For the same birth details:
-
-- Cross-check house placements
-- Planet positions
-- Zodiac signs
-
-Add a short note in `README`:
-
-- Which birth details you validated with
-- Whether the output matched exactly or had differences
-
-### Technical Requirements
-
-- Flutter (latest stable)
-- Clean folder structure
-- Reusable widgets
-- Proper naming conventions
-- No crashes on invalid input
-
-Bonus (optional):
-
-- Light animations
-- Dark mode support
-- Responsive layout
-
-### Submission Requirements
-
-You must submit all of the following:
-
-1. APK file (debug or release)
-2. Screen recording showing:
-   - Inputting birth details
-   - API call
-   - Kundali rendering
-3. GitHub repository (public)
-   - Complete source code
-   - Proper commit history
-4. `README.md` containing:
-   - Setup instructions
-   - API used
-   - Screenshots
-   - Validation notes vs app.atri.care
-
-### Evaluation Criteria
-
-- Accuracy of kundali rendering
-- Quality of custom UI implementation
-- Code readability and structure
-- Correct API usage
-- Validation effort and honesty
-
-### Final Notes
-
-This assignment mirrors real production work at Atri. We care deeply about:
-
-- UI precision
-- Astrological correctness
-- Engineering discipline
+```
+lib/
+├── main.dart                  # Entry point
+├── src/
+│   ├── app/                   # App wiring (Theme, Routes)
+│   ├── core/                  # Shared kernel (Theme, Widgets)
+│   └── features/
+│       └── kundali/           # Feature module
+│           ├── application/   # State management (Controllers)
+│           ├── data/          # API integration (Repository)
+│           ├── domain/        # Business logic (Models)
+│           └── presentation/  # UI (Screens, Painters)
+└── test/                      # Unit & Widget tests
+```
