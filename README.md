@@ -4,6 +4,12 @@ Kundalify is a Flutter app that generates a North Indian style Vedic birth chart
 
 ## Setup
 
+
+## Demo
+
+https://github.com/user-attachments/assets/79e10673-0b48-4f3c-b8ae-d1907e706c8b
+
+
 ### Prerequisites
 - Flutter SDK installed (latest stable)
 - Dart SDK installed
