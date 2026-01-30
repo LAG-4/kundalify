@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +8,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/cosmic_primary_button.dart';
 import '../../../../core/widgets/cosmic_scaffold.dart';
 import '../../application/kundali_flow_controller.dart';
+import '../../data/location_search_repository.dart';
 import '../../domain/birth_details.dart';
+import '../../domain/place_suggestion.dart';
 
 class KundaliInputScreen extends ConsumerStatefulWidget {
   const KundaliInputScreen({super.key, this.prefill});
@@ -24,9 +27,12 @@ class _KundaliInputScreenState extends ConsumerState<KundaliInputScreen> {
   late DateTime _date;
   late TimeOfDay _time;
 
+  late final TextEditingController _cityController;
   late final TextEditingController _latController;
   late final TextEditingController _lonController;
   late final TextEditingController _tzController;
+
+  bool _searchingCity = false;
 
   @override
   void initState() {
@@ -40,6 +46,7 @@ class _KundaliInputScreenState extends ConsumerState<KundaliInputScreen> {
         ? TimeOfDay(hour: now.hour, minute: now.minute)
         : TimeOfDay(hour: prefill.time.hour, minute: prefill.time.minute);
 
+    _cityController = TextEditingController();
     _latController = TextEditingController(
       text: prefill == null ? '' : prefill.latitude.toStringAsFixed(6),
     );
@@ -47,17 +54,182 @@ class _KundaliInputScreenState extends ConsumerState<KundaliInputScreen> {
       text: prefill == null ? '' : prefill.longitude.toStringAsFixed(6),
     );
 
-    final defaultTz =
-        prefill?.timezone ?? (now.timeZoneOffset.inMinutes / 60.0);
+    final defaultTz = prefill?.timezone ?? 5.5;
     _tzController = TextEditingController(text: _formatTz(defaultTz));
   }
 
   @override
   void dispose() {
+    _cityController.dispose();
     _latController.dispose();
     _lonController.dispose();
     _tzController.dispose();
     super.dispose();
+  }
+
+  void _showSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<PlaceSuggestion?> _pickPlace(
+    List<PlaceSuggestion> options, {
+    required String query,
+  }) async {
+    if (!mounted) return null;
+
+    return showModalBottomSheet<PlaceSuggestion>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: Container(
+            margin: const EdgeInsets.only(top: 12),
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+            decoration: BoxDecoration(
+              color: AppColors.cosmic900.withValues(alpha: 0.98),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Center(
+                  child: Container(
+                    width: 48,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            'Select a place',
+                            style: GoogleFonts.cinzel(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Results for "$query"',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: AppColors.slate400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
+                      color: AppColors.slate300,
+                      tooltip: 'Close',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    separatorBuilder: (_, index) => Divider(
+                      height: 1,
+                      color: Colors.white.withValues(alpha: 0.08),
+                    ),
+                    itemBuilder: (context, index) {
+                      final place = options[index];
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 4,
+                        ),
+                        title: Text(
+                          place.label(),
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${place.latitude.toStringAsFixed(4)}, ${place.longitude.toStringAsFixed(4)}',
+                          style: GoogleFonts.inter(
+                            color: AppColors.slate400,
+                            fontSize: 12,
+                          ),
+                        ),
+                        trailing: const Icon(
+                          Icons.north_east,
+                          size: 18,
+                          color: AppColors.slate300,
+                        ),
+                        onTap: () => Navigator.of(context).pop(place),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _searchCity() async {
+    final query = _cityController.text.trim();
+    if (query.isEmpty) {
+      _showSnack('Enter a city/place to search');
+      return;
+    }
+    if (_searchingCity) return;
+
+    setState(() => _searchingCity = true);
+    try {
+      final repo = ref.read(locationSearchRepositoryProvider);
+      final results = await repo.search(query, limit: 12);
+      if (!mounted) return;
+
+      if (results.isEmpty) {
+        _showSnack('No results for "$query"');
+        return;
+      }
+
+      final picked = await _pickPlace(results, query: query);
+      if (!mounted || picked == null) return;
+
+      setState(() {
+        _cityController.text = picked.label();
+        _latController.text = picked.latitude.toStringAsFixed(6);
+        _lonController.text = picked.longitude.toStringAsFixed(6);
+      });
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('City search failed: $e\n$st');
+      }
+      _showSnack('Could not search city. Please try again.');
+    } finally {
+      if (mounted) setState(() => _searchingCity = false);
+    }
   }
 
   String _formatDate(DateTime date) {
@@ -201,52 +373,129 @@ class _KundaliInputScreenState extends ConsumerState<KundaliInputScreen> {
                               onTap: _pickTime,
                             ),
                             const SizedBox(height: 16),
-                            _NumberField(
-                              label: 'Latitude',
-                              hintText: 'e.g. 19.0760',
-                              controller: _latController,
-                              validator: (v) {
-                                final parsed = _parseDoubleField(v ?? '');
-                                if (parsed == null) {
-                                  return 'Latitude is required';
-                                }
-                                if (parsed < -90 || parsed > 90) {
-                                  return 'Latitude must be between -90 and 90';
-                                }
-                                return null;
-                              },
+                            TextFormField(
+                              controller: _cityController,
+                              style: GoogleFonts.inter(color: Colors.white),
+                              textInputAction: TextInputAction.search,
+                              onFieldSubmitted: (_) => _searchCity(),
+                              decoration: InputDecoration(
+                                labelText: 'City / Place',
+                                hintText: 'e.g. Mumbai, India',
+                                hintStyle: GoogleFonts.inter(
+                                  color: AppColors.slate400,
+                                ),
+                                labelStyle: GoogleFonts.inter(
+                                  color: AppColors.slate400,
+                                ),
+                                filled: true,
+                                fillColor: Colors.white.withValues(alpha: 0.05),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide(
+                                    color: Colors.white.withValues(alpha: 0.10),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide(
+                                    color: AppColors.mysticPurple.withValues(
+                                      alpha: 0.60,
+                                    ),
+                                  ),
+                                ),
+                                suffixIcon: IconButton(
+                                  onPressed: _searchingCity
+                                      ? null
+                                      : _searchCity,
+                                  tooltip: 'Search',
+                                  icon: _searchingCity
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Icon(Icons.search),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Search to auto-fill latitude & longitude.',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: AppColors.slate400,
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 16),
-                            _NumberField(
-                              label: 'Longitude',
-                              hintText: 'e.g. 72.8777',
-                              controller: _lonController,
-                              validator: (v) {
-                                final parsed = _parseDoubleField(v ?? '');
-                                if (parsed == null) {
-                                  return 'Longitude is required';
-                                }
-                                if (parsed < -180 || parsed > 180) {
-                                  return 'Longitude must be between -180 and 180';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            _NumberField(
-                              label: 'Time Zone (UTC offset)',
-                              hintText: 'e.g. 5.5 for IST',
-                              controller: _tzController,
-                              validator: (v) {
-                                final parsed = _parseDoubleField(v ?? '');
-                                if (parsed == null) {
-                                  return 'Time zone is required';
-                                }
-                                if (parsed < -12 || parsed > 14) {
-                                  return 'Time zone must be between -12 and +14';
-                                }
-                                return null;
-                              },
+                            ExpansionTile(
+                              title: Text(
+                                'Advanced Location Details',
+                                style: GoogleFonts.inter(
+                                  color: AppColors.slate300,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              collapsedIconColor: AppColors.slate400,
+                              iconColor: AppColors.mysticPurple,
+                              childrenPadding: const EdgeInsets.only(
+                                top: 16,
+                                bottom: 12,
+                              ),
+                              children: <Widget>[
+                                _NumberField(
+                                  label: 'Latitude',
+                                  hintText: 'e.g. 19.0760',
+                                  controller: _latController,
+                                  validator: (v) {
+                                    final parsed = _parseDoubleField(v ?? '');
+                                    if (parsed == null) {
+                                      return 'Latitude is required';
+                                    }
+                                    if (parsed < -90 || parsed > 90) {
+                                      return 'Latitude must be between -90 and 90';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                _NumberField(
+                                  label: 'Longitude',
+                                  hintText: 'e.g. 72.8777',
+                                  controller: _lonController,
+                                  validator: (v) {
+                                    final parsed = _parseDoubleField(v ?? '');
+                                    if (parsed == null) {
+                                      return 'Longitude is required';
+                                    }
+                                    if (parsed < -180 || parsed > 180) {
+                                      return 'Longitude must be between -180 and 180';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                _NumberField(
+                                  label: 'Time Zone (UTC offset)',
+                                  hintText: 'e.g. 5.5 for IST',
+                                  controller: _tzController,
+                                  validator: (v) {
+                                    final parsed = _parseDoubleField(v ?? '');
+                                    if (parsed == null) {
+                                      return 'Time zone is required';
+                                    }
+                                    if (parsed < -12 || parsed > 14) {
+                                      return 'Time zone must be between -12 and +14';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 24),
                             DefaultTextStyle(
@@ -265,15 +514,6 @@ class _KundaliInputScreenState extends ConsumerState<KundaliInputScreen> {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            Text(
-                              'We do not store your data. API keys are provided via --dart-define.',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                height: 1.4,
-                                color: AppColors.slate400,
-                              ),
-                            ),
                           ],
                         ),
                       ),
