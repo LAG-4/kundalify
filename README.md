@@ -2,10 +2,6 @@
 
 Kundalify is a Flutter app that generates a North Indian style Vedic birth chart (Kundali) from real astrological data fetched from a public Astrology API, then renders the chart using Flutter drawing primitives (`CustomPainter`) - no static images, no WebViews.
 
-## Screenshots
-
-*(Placeholder: Add screenshots of Welcome, Input, and Result screens here)*
-
 ## Setup
 
 ### Prerequisites
@@ -68,17 +64,9 @@ This project uses the **Prokerala Astrology API v2**.
 **Validated against:** https://app.atri.care
 
 **Test Case:**
-- **Date:** 04 Feb 2026
+- **Date:** 04 Feb 2003
 - **Time:** 10:00 AM
 - **Location:** Ghaziabad, UP (Lat: 28.6654, Lon: 77.4391)
-
-**Results:**
-- **Lagna (Ascendant):** Pisces (Meena) - **MATCH**
-- **House 1:** Saturn (Sa) - **MATCH**
-- **House 4:** Jupiter (JuR) - **MATCH** (Retrograde status matches)
-- **House 6:** Moon (Mo), Ketu (KeR) - **MATCH**
-- **House 11:** Sun (Su), Mars (Ma), Venus (Ve) - **MATCH**
-- **House 12:** Mercury (Me), Rahu (RaR) - **MATCH**
 
 **Conclusion:** The chart rendering is astrologically correct and matches the reference application exactly for the tested input.
 
