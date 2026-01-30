@@ -258,18 +258,6 @@ class _KundaliResultScreenState extends ConsumerState<KundaliResultScreen> {
                                   : null,
                             ),
                           ),
-                          if (kDebugMode)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 12),
-                              child: Text(
-                                'Tip: Use --dart-define to configure your API keys for accurate results.',
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  color: AppColors.slate400,
-                                ),
-                              ),
-                            ),
                         ],
                       ),
                     ),

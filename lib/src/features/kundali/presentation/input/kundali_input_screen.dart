@@ -232,6 +232,17 @@ class _KundaliInputScreenState extends ConsumerState<KundaliInputScreen> {
     }
   }
 
+  void _onCityChanged(String value) {
+    final lat = _latController.text.trim();
+    final lon = _lonController.text.trim();
+    if (lat.isEmpty && lon.isEmpty) return;
+
+    setState(() {
+      _latController.clear();
+      _lonController.clear();
+    });
+  }
+
   String _formatDate(DateTime date) {
     final d = date.day.toString().padLeft(2, '0');
     final m = date.month.toString().padLeft(2, '0');
@@ -285,13 +296,31 @@ class _KundaliInputScreenState extends ConsumerState<KundaliInputScreen> {
   void _submit() {
     final form = _formKey.currentState;
     if (form == null) return;
-    if (!form.validate()) return;
+    if (!form.validate()) {
+      _showSnack('Please review the form and try again.');
+      return;
+    }
 
-    final lat = _parseDoubleField(_latController.text)!;
-    final lon = _parseDoubleField(_lonController.text)!;
-    final tz =
-        _parseDoubleField(_tzController.text) ??
-        (DateTime.now().timeZoneOffset.inMinutes / 60.0);
+    final lat = _parseDoubleField(_latController.text);
+    final lon = _parseDoubleField(_lonController.text);
+    if (lat == null || lon == null) {
+      _showSnack('Search and select a city to auto-fill coordinates.');
+      return;
+    }
+    if (lat < -90 || lat > 90) {
+      _showSnack('Latitude must be between -90 and 90');
+      return;
+    }
+    if (lon < -180 || lon > 180) {
+      _showSnack('Longitude must be between -180 and 180');
+      return;
+    }
+
+    final tz = _parseDoubleField(_tzController.text) ?? 5.5;
+    if (tz < -12 || tz > 14) {
+      _showSnack('Time zone must be between -12 and +14');
+      return;
+    }
 
     final details = BirthDetails(
       date: _date,
@@ -377,6 +406,7 @@ class _KundaliInputScreenState extends ConsumerState<KundaliInputScreen> {
                               controller: _cityController,
                               style: GoogleFonts.inter(color: Colors.white),
                               textInputAction: TextInputAction.search,
+                              onChanged: _onCityChanged,
                               onFieldSubmitted: (_) => _searchCity(),
                               decoration: InputDecoration(
                                 labelText: 'City / Place',
